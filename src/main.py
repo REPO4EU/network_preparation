@@ -8,7 +8,8 @@ import logging
 import toml
 import os
 from pathlib import Path
-from common import download
+from common import download, parse
+from parsers import string
 
 logger = logging.getLogger()
 config = toml.load("config.toml")
@@ -46,9 +47,9 @@ def main(argv=None):
     logger.debug(f"{config=}")
 
     os.makedirs(Path(config["download_dir"]).resolve(), exist_ok=True)
+    os.makedirs(Path(config["network_dir"]).resolve(), exist_ok=True)
 
     for source in config["sources"].items():
-        logger.info(f"Downloading {source[0]}...")
         for file in source[1].items():
             logger.info(f"Downloading {file[0]}...")
             download(
@@ -57,6 +58,15 @@ def main(argv=None):
                 args.force_download
             )
 
+    for source in config["sources"].items():
+        for file in source[1].items():
+            logger.info(f"Parsing {file[0]}...")
+            parse(
+                Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve(),
+                Path(os.path.join(config["network_dir"], f"{file[0]}.{file[1]["id_space"]}.gt")).resolve(),
+                source[0],
+                args.force_download,
+            )
 
 
 if __name__ == "__main__":

@@ -1,9 +1,13 @@
 download_dir = "downloads"
+network_dir = "networks"
 
 [sources]
 
 [sources.string]
-[sources.string.human_physical_links_min900]
-filename = "9606.protein.physical.links.v12.0.min900.onlyAB.csv"
+
+[sources.string.human_physical_links_v12_min900]
+filename = "9606.protein.physical.links.v12.0.min900.onlyAB.csv.gz"
 url = "https://stringdb-downloads.org/download/stream/protein.physical.links.v12.0/9606.protein.physical.links.v12.0.min900.onlyAB.csv.gz"
+id_space = "Ensembl_PRO"
+
 
