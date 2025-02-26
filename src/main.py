@@ -27,8 +27,8 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "-f",
-        "--force_download",
-        help="Force download of files even if they already exist.",
+        "--force",
+        help="Force download and parsing of files even if they already exist.",
         action="store_true",
     )
     return parser.parse_args(argv)
@@ -51,22 +51,25 @@ def main(argv=None):
 
     for source in config["sources"].items():
         for file in source[1].items():
-            logger.info(f"Downloading {file[0]}...")
-            download(
-                file[1]["url"],
-                Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve(),
-                args.force_download
-            )
+            url = file[1]["url"]
+            target = Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve()
+            if not target.exists() or args.force:
+                logger.info(f"Downloading {file[0]}...")
+                download(url, target)
+            else:
+                logger.info(f"Skipping download of {file[0]}. File already exists")
+                logger.debug(f"{target=}")
 
     for source in config["sources"].items():
         for file in source[1].items():
-            logger.info(f"Parsing {file[0]}...")
-            parse(
-                Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve(),
-                Path(os.path.join(config["network_dir"], f"{file[0]}.{file[1]["id_space"]}.gt")).resolve(),
-                source[0],
-                args.force_download,
-            )
+            input_file = Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve()
+            output_file = Path(os.path.join(config["network_dir"], f"{file[0]}.{file[1]["id_space"]}.gt")).resolve()
+            if not output_file.exists() or args.force:
+                logger.info(f"Parsing {file[0]}...")
+                parse(input_file, output_file, source[0])
+            else:
+                logger.info(f"Skipping parsing of {file[0]}. File already exists")
+                logger.debug(f"{output_file=}")
 
 
 if __name__ == "__main__":
