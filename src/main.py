@@ -54,22 +54,57 @@ def main(argv=None):
             url = file[1]["url"]
             target = Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve()
             if not target.exists() or args.force:
-                logger.info(f"Downloading {file[0]}...")
+                logger.info(f"Downloading {source[0]}.{file[0]}...")
                 download(url, target)
             else:
                 logger.info(f"Skipping download of {file[0]}. File already exists")
                 logger.debug(f"{target=}")
 
-    for source in config["sources"].items():
-        for file in source[1].items():
-            input_file = Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve()
-            output_file = Path(os.path.join(config["network_dir"], f"{file[0]}.{file[1]["id_space"]}.gt")).resolve()
-            if not output_file.exists() or args.force:
-                logger.info(f"Parsing {file[0]}...")
-                parse(input_file, output_file, source[0])
-            else:
-                logger.info(f"Skipping parsing of {file[0]}. File already exists")
-                logger.debug(f"{output_file=}")
+        output_file_configs = []
+
+        for source in config["sources"].items():
+
+            # iterate over different downloadable files
+            for file in source[1].items():
+
+                input_file = Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve()
+
+                # check if a single file should be split into multiple subsets
+                if "subsets" in file[1].keys():
+                    for subset in file[1]["subsets"].items():
+                        output_file_configs.append(
+                            {
+                                "input_file": input_file,
+                                "source": source[0],
+                                "file": file[0],
+                                "subset": subset[0],
+                                "output_file": Path(os.path.join(config["network_dir"], f"{source[0]}.{file[0]}_{subset[0]}.{file[1]["id_space"]}.gt")).resolve(),
+                                "file_config": file[1],
+                                "subset_config": subset[1],
+                                "id_space": file[1]["id_space"],
+                            }
+                        )
+                else:
+                    output_file_configs.append(
+                        {
+                            "input_file": input_file,
+                            "source": source[0],
+                            "file": file[0],
+                            "output_file": Path(os.path.join(config["network_dir"], f"{source[0]}.{file[0]}.{file[1]["id_space"]}.gt")).resolve(),
+                            "file_config": file[1],
+                            "id_space": file[1]["id_space"],
+                        }
+                    )
+
+    logger.debug(f"{output_file_configs=}")
+
+
+    for entry in output_file_configs:
+        if not entry["output_file"].exists() or args.force:
+            logger.info(f"Parsing {entry['output_file'].name}...")
+            parse(entry["input_file"], entry["output_file"], entry["source"], config=entry)
+        else:
+            logger.info(f"Skipping parsing of {entry['output_file'].name}. File already exists")
 
 
 if __name__ == "__main__":

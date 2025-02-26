@@ -5,22 +5,35 @@ network_dir = "networks"
 
 [sources.string]
 
-[sources.string.human_physical_links_v12_min900]
+[sources.string.human_physical_links_v12_0_min900]
 filename = "9606.protein.physical.links.v12.0.min900.onlyAB.csv.gz"
 url = "https://stringdb-downloads.org/download/stream/protein.physical.links.v12.0/9606.protein.physical.links.v12.0.min900.onlyAB.csv.gz"
 id_space = "Ensembl_PRO"
 
-[sources.string.human_physical_links_v12_min700]
+[sources.string.human_physical_links_v12_0_min700]
 filename = "9606.protein.physical.links.v12.0.min700.onlyAB.csv.gz"
 url = "https://stringdb-downloads.org/download/stream/protein.physical.links.v12.0/9606.protein.physical.links.v12.0.min700.onlyAB.csv.gz"
 id_space = "Ensembl_PRO"
 
-[sources.string.human_links_v12_min900]
+[sources.string.human_links_v12_0_min900]
 filename = "9606.protein.links.v12.0.min900.onlyAB.csv.gz"
 url = "https://stringdb-downloads.org/download/stream/protein.links.v12.0/9606.protein.links.v12.0.min900.onlyAB.csv.gz"
 id_space = "Ensembl_PRO"
 
-[sources.string.human_links_v12_min700]
+[sources.string.human_links_v12_0_min700]
 filename = "9606.protein.links.v12.0.min700.onlyAB.csv.gz"
 url = "https://stringdb-downloads.org/download/stream/protein.links.v12.0/9606.protein.links.v12.0.min700.onlyAB.csv.gz"
 id_space = "Ensembl_PRO"
+
+[sources.hippie]
+[sources.hippie.v2_3]
+filename = "hippie_current.txt"
+url = "https://cbdm-01.zdv.uni-mainz.de/~mschaefer/hippie/hippie_current.txt"
+# subsets based on https://cbdm-01.zdv.uni-mainz.de/~mschaefer/hippie/information.php
+id_space = "UniProtKB-ID"
+
+[sources.hippie.v2_3.subsets]
+[sources.hippie.v2_3.subsets.high_confidence]
+cutoff = 0.73
+[sources.hippie.v2_3.subsets.medium_confidence]
+cutoff = 0.63
