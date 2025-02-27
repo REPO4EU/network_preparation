@@ -57,7 +57,7 @@ def main(argv=None):
                 logger.info(f"Downloading {source[0]}.{file[0]}...")
                 download(url, target)
             else:
-                logger.info(f"Skipping download of {file[0]}. File already exists")
+                logger.info(f"Skipping download of {source[0]}.{file[0]}. File already exists")
                 logger.debug(f"{target=}")
 
         output_file_configs = []

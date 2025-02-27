@@ -37,3 +37,13 @@ id_space = "UniProtKB-ID"
 cutoff = 0.73
 [sources.hippie.v2_3.subsets.medium_confidence]
 cutoff = 0.63
+
+[sources.biogrid]
+[sources.biogrid.4_4_242]
+url = "https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive/BIOGRID-4.4.242/BIOGRID-ORGANISM-4.4.242.tab3.zip"
+filename = "BIOGRID-ORGANISM-4.4.242.tab3.zip"
+id_space = "UniProtKB-AC"
+
+[sources.biogrid.4_4_242.subsets]
+[sources.biogrid.4_4_242.subsets.homo_sapiens]
+filename = "BIOGRID-ORGANISM-Homo_sapiens-4.4.242.tab3.txt"
