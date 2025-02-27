@@ -47,3 +47,9 @@ id_space = "UniProtKB-AC"
 [sources.biogrid.4_4_242.subsets]
 [sources.biogrid.4_4_242.subsets.homo_sapiens]
 filename = "BIOGRID-ORGANISM-Homo_sapiens-4.4.242.tab3.txt"
+
+[sources.iid]
+[sources.iid.human]
+url = "https://iid.ophid.utoronto.ca/static/download/human_annotated_PPIs.txt.gz"
+filename = "human_annotated_PPIs.txt.gz"
+id_space = "UniProtKB-AC"

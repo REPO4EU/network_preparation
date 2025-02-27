@@ -1,6 +1,6 @@
 import subprocess
 import logging
-from parsers import string, hippie, biogrid
+from parsers import string, hippie, biogrid, iid
 
 def download(url, target):
     logging.debug(f"Downloading {url} to {target}.")
@@ -17,6 +17,8 @@ def parse(input_file, output_file, parser, *args, **kwargs):
             g = hippie.parse(input_file, kwargs["config"])
         case "biogrid":
             g = biogrid.parse(input_file, kwargs["config"])
+        case "iid":
+            g = iid.parse(input_file)
         case _:
             raise ValueError(f"Unknown parser: {parser}")
     g.save(str(output_file))
