@@ -53,3 +53,15 @@ filename = "BIOGRID-ORGANISM-Homo_sapiens-4.4.242.tab3.txt"
 url = "https://iid.ophid.utoronto.ca/static/download/human_annotated_PPIs.txt.gz"
 filename = "human_annotated_PPIs.txt.gz"
 id_space = "UniProtKB-AC"
+
+[sources.nedrex]
+[sources.nedrex.reviewed_proteins]
+url="https://exbio.wzw.tum.de/repo4eu_nedrex_open/"
+filename = "nedrex_reviewed_proteins_exp.tsv"
+id_space = "UniProtKB-AC"
+
+[sources.nedrex.reviewed_proteins.subsets]
+[sources.nedrex.reviewed_proteins.subsets.exp]
+cutoff = 0
+[sources.nedrex.reviewed_proteins.subsets.exp_high_confidence]
+cutoff = 13.5

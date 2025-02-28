@@ -55,7 +55,7 @@ def main(argv=None):
             target = Path(os.path.join(config["download_dir"], file[1]["filename"])).resolve()
             if not target.exists() or args.force:
                 logger.info(f"Downloading {source[0]}.{file[0]}...")
-                download(url, target)
+                download(url, target, source[0])
             else:
                 logger.info(f"Skipping download of {source[0]}.{file[0]}. File already exists")
                 logger.debug(f"{target=}")
