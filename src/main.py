@@ -11,6 +11,9 @@ from pathlib import Path
 from common import download, parse, map_to_uniprot_ac
 from parsers import string
 from id_mapping import id_mapper
+import glob
+import graph_tool.all as gt
+import pandas as pd
 
 logger = logging.getLogger()
 config = toml.load("config.toml")
@@ -49,6 +52,7 @@ def main(argv=None):
 
     os.makedirs(Path(config["download_dir"]).resolve(), exist_ok=True)
     os.makedirs(Path(config["network_dir"]).resolve(), exist_ok=True)
+    os.makedirs(Path(config["log_dir"]).resolve(), exist_ok=True)
 
 
 
@@ -124,6 +128,21 @@ def main(argv=None):
                 map_to_uniprot_ac(entry["output_file"], entry["uniprot_file"], entry["id_space"], mapper)
             else:
                 logger.info(f"Skipping mapping of {entry['output_file'].name} to UniProtKB-AC. File already exists")
+
+    # Print network sizes
+    networks = glob.glob(os.path.join(config["network_dir"], "*.gt"))
+    network_stats = []
+    for network in networks:
+        network_basename = os.path.basename(network)
+        g = gt.load_graph(network)
+        network_stats.append({"network": network_basename, "nodes": g.num_vertices(), "edges": g.num_edges()})
+    network_stats_df = pd.DataFrame(network_stats)
+    network_stats_df.sort_values(by='network', inplace=True)
+    network_stats_df.reset_index(drop=True, inplace=True)  
+
+    network_stats_df.to_csv(os.path.join(config["log_dir"], "network_stats.tsv"), index=False, sep="\t")
+    print(network_stats_df.to_string())
+
     
 
 

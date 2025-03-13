@@ -1,5 +1,6 @@
 download_dir = "downloads"
 network_dir = "networks"
+log_dir = "logs"
 
 [idmapping]
 [idmapping.uniprot]

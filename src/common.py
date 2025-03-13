@@ -76,10 +76,10 @@ def map_to_uniprot_ac(input_file, output_file, id_space, mapper):
     input_g = gt.load_graph(str(input_file))
     input_nodes = set(g2nodes(input_g))
     input_edges = list(g2tuples(input_g))
-    logging.info(f"Loaded {len(input_nodes)} nodes and {len(input_edges)} edges from {input_file}.")
+    logging.debug(f"Loaded {len(input_nodes)} nodes and {len(input_edges)} edges from {input_file}.")
     mappable = input_nodes.intersection(mapping.keys())
     n_uniquely_mappable = len(mappable.difference(set([k for k, v in mapping.items() if len(v)>1])))
-    logging.info(f"Mapping available for {len(mappable)} ({n_uniquely_mappable} uniquely) out of {len(input_nodes)} nodes.")
+    logging.debug(f"Mapping available for {len(mappable)} ({n_uniquely_mappable} uniquely) out of {len(input_nodes)} nodes.")
 
     output_tuples = []
     for source, target in input_edges:
@@ -91,10 +91,7 @@ def map_to_uniprot_ac(input_file, output_file, id_space, mapper):
     output_g = gt.Graph(output_tuples, directed=False, hashed=True)
     output_g = ids2names(output_g)
 
-    n_output_nodes = len(set(g2nodes(output_g)))
-    n_output_edges = len(list(g2tuples(output_g)))
-    logging.info(f"Created {n_output_nodes} nodes and {n_output_edges} edges in {output_file}.")
-
+    logging.debug(f"Created {output_g.num_vertices()} nodes and {output_g.num_edges()} edges in {output_file}.")
     output_g.save(str(output_file))
 
     
