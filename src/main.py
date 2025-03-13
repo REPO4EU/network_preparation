@@ -135,11 +135,28 @@ def main(argv=None):
     for network in networks:
         network_basename = os.path.basename(network)
         g = gt.load_graph(network)
-        network_stats.append({"network": network_basename, "nodes": g.num_vertices(), "edges": g.num_edges()})
+        self_loops = sum(1 for e in g.edges() if e.source() == e.target())
+        seen_edges = set()
+        edges_to_remove = []
+
+        # Identify duplicate edges
+        for e in g.edges():
+            edge_tuple = tuple(sorted([e.source(), e.target()])) 
+            if edge_tuple in seen_edges:
+                edges_to_remove.append(e)  # Mark for removal
+            else:
+                seen_edges.add(edge_tuple)
+
+        network_stats.append({
+            "network": network_basename, 
+            "nodes": g.num_vertices(), 
+            "self_loops": self_loops,
+            "edges": g.num_edges(), 
+            "non_unique_edges": len(edges_to_remove),
+        })
     network_stats_df = pd.DataFrame(network_stats)
     network_stats_df.sort_values(by='network', inplace=True)
     network_stats_df.reset_index(drop=True, inplace=True)  
-
     network_stats_df.to_csv(os.path.join(config["log_dir"], "network_stats.tsv"), index=False, sep="\t")
     print(network_stats_df.to_string())
 
