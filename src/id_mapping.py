@@ -5,27 +5,26 @@ from pathlib import Path
 import os
 from collections import defaultdict
 
-def create_ensembl_pro_to_uniprot_ac(df):
+def create_mapping(df, source_col, target_col):
+    mapping = defaultdict(list)
 
-    ensembl_pro_to_uniprot_ac = defaultdict(list)
-
-    # Iterate over rows
-    logging.info("Creating mapping from Ensembl_PRO to UniProtKB-AC.")
-    for _, row in df.iterrows():
-        keys = row["Ensembl_PRO"]  # List of keys
-        value = row["UniProtKB-AC"]
-        
-        for key in keys:  # Assign each key to the value
-            ensembl_pro_to_uniprot_ac[key].append(value)
+    # Convert column elements to lists, if not yet the case
+    logging.info(f"Creating mapping from {source_col} to {target_col}.")
+    source_lists = df[source_col].apply(lambda x: x if isinstance(x, list) else [x]).tolist()
+    target_lists = df[target_col].apply(lambda x: x if isinstance(x, list) else [x]).tolist()
+    for sources, targets in zip(source_lists, target_lists):
+        for source in sources:
+            for target in targets:
+                mapping[source].append(target)
 
     # Convert defaultdict to a regular dictionary
-    ensembl_pro_to_uniprot_ac = dict(ensembl_pro_to_uniprot_ac)
+    ensembl_pro_to_uniprot_ac = dict(mapping)
 
-    no_mapping = ensembl_pro_to_uniprot_ac.pop("nan", None)
+    no_mapping = mapping.pop("nan", [])
     n_unqiue = 0
     n_multiple = 0
     max_multiple = 0
-    for key, value in ensembl_pro_to_uniprot_ac.items():
+    for key, value in mapping.items():
         if len(value)>1:
             n_multiple += 1
             if len(value)>max_multiple:
@@ -33,11 +32,10 @@ def create_ensembl_pro_to_uniprot_ac(df):
         else:
             n_unqiue += 1
 
-    logging.info(f"Ignored {len(no_mapping)} rows with no Ensembl_PRO ID.")
-    logging.info(f"Created mapping for {len(ensembl_pro_to_uniprot_ac)} Ensembl_PRO IDs. {n_unqiue} unique, {n_multiple} multi mappings (maximum {max_multiple}).")
+    logging.info(f"Ignored {len(no_mapping)} rows without a mapping to {target_col}.")
+    logging.info(f"Created mapping for {len(mapping)} {source_col} ids. {n_unqiue} unique, {n_multiple} multi mappings (maximum {max_multiple}).")
 
-    return ensembl_pro_to_uniprot_ac
-
+    return mapping
 class id_mapper:
     def __init__(self, uniprot_file):
 
@@ -89,7 +87,7 @@ class id_mapper:
         df["Ensembl_PRO"] = df["Ensembl_PRO"].apply(lambda lst: [x.split(".")[0] for x in lst] if isinstance(lst, list) else lst)
 
         # Create mappings
-        self.uniprot_id_to_uniprot_ac = df.set_index("UniProtKB-ID")["UniProtKB-AC"].to_dict()
-        self.ensembl_pro_to_uniprot_ac = create_ensembl_pro_to_uniprot_ac(df)
+        self.uniprot_id_to_uniprot_ac = create_mapping(df, "UniProtKB-ID", "UniProtKB-AC")
+        self.ensembl_pro_to_uniprot_ac = create_mapping(df, "Ensembl_PRO", "UniProtKB-AC")
 
 
