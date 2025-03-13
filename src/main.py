@@ -109,7 +109,6 @@ def main(argv=None):
     logger.debug(f"{network_configs=}")
 
 
-
     # parse network files to graph-tool graphs in their native id space
     for entry in network_configs:
         if not entry["output_file"].exists() or args.force:
@@ -117,6 +116,7 @@ def main(argv=None):
             parse(entry["input_file"], entry["output_file"], entry["source"], config=entry)
         else:
             logger.info(f"Skipping parsing of {entry['output_file'].name}. File already exists")
+
 
     # Load id mapping
     mapper = id_mapper(uniprot_mapping_file)
@@ -129,7 +129,8 @@ def main(argv=None):
             else:
                 logger.info(f"Skipping mapping of {entry['output_file'].name} to UniProtKB-AC. File already exists")
 
-    # Print network sizes
+
+    # Print network stats
     networks = glob.glob(os.path.join(config["network_dir"], "*.gt"))
     network_stats = []
     for network in networks:
@@ -154,13 +155,14 @@ def main(argv=None):
             "edges": g.num_edges(), 
             "non_unique_edges": len(edges_to_remove),
         })
+
     network_stats_df = pd.DataFrame(network_stats)
     network_stats_df.sort_values(by='network', inplace=True)
     network_stats_df.reset_index(drop=True, inplace=True)  
     network_stats_df.to_csv(os.path.join(config["log_dir"], "network_stats.tsv"), index=False, sep="\t")
     print(network_stats_df.to_string())
 
-    
+    logger.info("Program finished.")
 
 
 if __name__ == "__main__":

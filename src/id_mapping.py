@@ -7,6 +7,7 @@ from collections import defaultdict
 
 def create_mapping(df, source_col, target_col):
     mapping = defaultdict(list)
+    no_mapping_target = []
 
     # Convert column elements to lists, if not yet the case
     logging.info(f"Creating mapping from {source_col} to {target_col}.")
@@ -15,12 +16,15 @@ def create_mapping(df, source_col, target_col):
     for sources, targets in zip(source_lists, target_lists):
         for source in sources:
             for target in targets:
-                mapping[source].append(target)
+                if target != "nan":
+                    mapping[source].append(target)
+                else:
+                    no_mapping_target.append(source)
 
     # Convert defaultdict to a regular dictionary
     ensembl_pro_to_uniprot_ac = dict(mapping)
 
-    no_mapping = mapping.pop("nan", [])
+    no_mapping_source = mapping.pop("nan", [])
     n_unqiue = 0
     n_multiple = 0
     max_multiple = 0
@@ -28,11 +32,12 @@ def create_mapping(df, source_col, target_col):
         if len(value)>1:
             n_multiple += 1
             if len(value)>max_multiple:
-                max_multiple = len(value)   
+                max_multiple = len(value)  
         else:
             n_unqiue += 1
 
-    logging.info(f"Ignored {len(no_mapping)} rows without a mapping to {target_col}.")
+    logging.info(f"Ignored {len(no_mapping_source)} with missing source ({source_col}).")
+    logging.info(f"Ignored {len(no_mapping_target)} with missing target ({target_col}).")
     logging.info(f"Created mapping for {len(mapping)} {source_col} ids. {n_unqiue} unique, {n_multiple} multi mappings (maximum {max_multiple}).")
 
     return mapping
@@ -70,24 +75,30 @@ class id_mapper:
             header=None,
             names=uniprot_header,
             compression="gzip",
+            dtype=str,
         )
         
         # Make sure UniProtKB-AC and ID only contain one value
         assert not df["UniProtKB-AC"].astype(str).str.contains(";").any()
         assert not df["UniProtKB-ID"].astype(str).str.contains(";").any()
-
         # Make sure UniProtKB-AC and ID are unique
         assert df["UniProtKB-AC"].is_unique
         assert df["UniProtKB-ID"].is_unique
 
-        # Split Ensembl_PRO column into lists multiple ids
+        # Split column into lists multiple ids
         df["Ensembl_PRO"] = df["Ensembl_PRO"].astype(str).str.split("; ")
+        df["Ensembl"] = df["Ensembl"].astype(str).str.split("; ")
+        df["GeneID (EntrezGene)"] = df["GeneID (EntrezGene)"].astype(str).str.split("; ")
 
         # Trim version number
         df["Ensembl_PRO"] = df["Ensembl_PRO"].apply(lambda lst: [x.split(".")[0] for x in lst] if isinstance(lst, list) else lst)
+        df["Ensembl"] = df["Ensembl"].apply(lambda lst: [x.split(".")[0] for x in lst] if isinstance(lst, list) else lst)
+        df["GeneID (EntrezGene)"] = df["GeneID (EntrezGene)"].apply(lambda lst: [x.split(".")[0] for x in lst] if isinstance(lst, list) else lst)
 
         # Create mappings
         self.uniprot_id_to_uniprot_ac = create_mapping(df, "UniProtKB-ID", "UniProtKB-AC")
         self.ensembl_pro_to_uniprot_ac = create_mapping(df, "Ensembl_PRO", "UniProtKB-AC")
+        self.uniprot_ac_to_ensembl = create_mapping(df, "UniProtKB-AC", "Ensembl")
+        self.uniprot_ac_to_entrez = create_mapping(df, "UniProtKB-AC", "GeneID (EntrezGene)")
 
 
