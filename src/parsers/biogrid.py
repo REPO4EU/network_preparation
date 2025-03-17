@@ -3,6 +3,7 @@ import logging
 import graph_tool.all as gt
 import zipfile
 from itertools import product
+from utils import filter_network_tuples
 
 def split_ids(entry):
     ids = []
@@ -34,6 +35,10 @@ def parse(input_file, config):
     network_tuples = []
     for tuple in tuples:
         network_tuples += product(tuple[0], tuple[1])
+
+    # remove duplicate edges and self-loops
+    network_tuples = filter_network_tuples(network_tuples)
+
     logging.debug(f"Number of parsed interactions: {len(network_tuples)}")
     
     g = gt.Graph(network_tuples, directed=False, hashed=True)

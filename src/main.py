@@ -8,7 +8,7 @@ import logging
 import toml
 import os
 from pathlib import Path
-from common import download, parse, map_to_uniprot_ac
+from common import download, parse, map_to_uniprot_ac, map_from_uniprot_ac
 from parsers import string
 from id_mapping import id_mapper
 import glob
@@ -102,6 +102,8 @@ def main(argv=None):
                 network_config["subset"] = subset
                 network_config["output_file"] = Path(f"{output_stem}.{file[1]["id_space"]}.gt").resolve()
                 network_config["uniprot_file"]= Path(f"{output_stem}.UniProtKB-AC.gt").resolve()
+                network_config["Ensembl"]= Path(f"{output_stem}.Ensembl.gt").resolve()
+                network_config["Entrez"]= Path(f"{output_stem}.Entrez.gt").resolve()
                 network_config["file_config"] = file[1]
                 network_config["subset_config"] = subset[1] if subset else {}
                 network_config["id_space"] = file[1]["id_space"]
@@ -121,6 +123,7 @@ def main(argv=None):
     # Load id mapping
     mapper = id_mapper(uniprot_mapping_file)
 
+    # Map to uniprot if not already the case
     for entry in network_configs:
         if entry["id_space"] != "UniProtKB-AC":
             if not entry["uniprot_file"].exists() or args.force:
@@ -128,6 +131,15 @@ def main(argv=None):
                 map_to_uniprot_ac(entry["output_file"], entry["uniprot_file"], entry["id_space"], mapper)
             else:
                 logger.info(f"Skipping mapping of {entry['output_file'].name} to UniProtKB-AC. File already exists")
+    
+    # Map to ensembl, entrez, and symbol
+    for entry in network_configs:
+        for target_id_space in ["Ensembl", "Entrez"]:
+            if not entry[target_id_space].exists() or args.force:
+                logger.info(f"Mapping {entry['uniprot_file'].name} to {target_id_space}...")
+                map_from_uniprot_ac(entry['uniprot_file'], entry[target_id_space], target_id_space, mapper)
+            else:
+                logger.info(f"Skipping mapping of {entry['uniprot_file'].name} to {target_id_space}. File already exists")
 
 
     # Print network stats

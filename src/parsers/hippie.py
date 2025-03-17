@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 import graph_tool.all as gt
+from utils import filter_network_tuples
 
 def parse(input_file, config):
 
@@ -19,6 +20,9 @@ def parse(input_file, config):
     # convert columns to tuples
     logging.debug(f"Remaining rows: {network_df.shape[0]}")
     network_tuples = network_df[[0, 2]].apply(tuple, axis=1).tolist()
+    
+    # remove duplicate edges and self-loops
+    network_tuples = filter_network_tuples(network_tuples)
 
 
 
