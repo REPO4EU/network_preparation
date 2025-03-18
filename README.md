@@ -7,6 +7,7 @@ The networks are converted to different ID spaces starting from UniProtKB-AC IDs
 
 Some sources (HIPPIE, STRING, NeDRex) are used generate multiple subsets based on different confidence thresholds.
 
+All self-loops (same source and target node) and duplicate edges (e.g., A -> B and B -> A) are removed. 
 
 ## Included networks
 Network sources: [STRING](https://string-db.org/cgi/download), [HIPPIE](https://cbdm-01.zdv.uni-mainz.de/~mschaefer/hippie/index.php), [BioGRID](https://thebiogrid.org/), [IID](https://iid.ophid.utoronto.ca/), [NeDRex](https://nedrex.net/index.html)
