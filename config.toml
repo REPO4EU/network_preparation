@@ -7,6 +7,9 @@ log_dir = "logs"
 url = "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz"
 filename = "HUMAN_9606_idmapping_selected.tab.gz"
 
+[idmapping.mygene]
+filename = "mygene_uniprot2symbol.json"
+
 [sources]
 
 [sources.string]

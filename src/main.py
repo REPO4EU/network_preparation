@@ -71,6 +71,7 @@ def main(argv=None):
     # download files for id mapping
     uniprot_mapping_file = Path(os.path.join(config["download_dir"], config["idmapping"]["uniprot"]["filename"])).resolve()
     uniport_mapping_url = config["idmapping"]["uniprot"]["url"]
+    mygene_mapping_file = Path(os.path.join(config["download_dir"], config["idmapping"]["mygene"]["filename"])).resolve()
     if not uniprot_mapping_file.exists() or args.force:
             logger.info(f"Downloading uniprot id mapping...")
             download(uniport_mapping_url, uniprot_mapping_file)
@@ -104,6 +105,7 @@ def main(argv=None):
                 network_config["uniprot_file"]= Path(f"{output_stem}.UniProtKB-AC.gt").resolve()
                 network_config["Ensembl"]= Path(f"{output_stem}.Ensembl.gt").resolve()
                 network_config["Entrez"]= Path(f"{output_stem}.Entrez.gt").resolve()
+                network_config["Symbol"]= Path(f"{output_stem}.Symbol.gt").resolve()
                 network_config["file_config"] = file[1]
                 network_config["subset_config"] = subset[1] if subset else {}
                 network_config["id_space"] = file[1]["id_space"]
@@ -121,7 +123,7 @@ def main(argv=None):
 
 
     # Load id mapping
-    mapper = id_mapper(uniprot_mapping_file)
+    mapper = id_mapper(uniprot_mapping_file, mygene_mapping_file)
 
     # Map to uniprot if not already the case
     for entry in network_configs:
@@ -134,7 +136,7 @@ def main(argv=None):
     
     # Map to ensembl, entrez, and symbol
     for entry in network_configs:
-        for target_id_space in ["Ensembl", "Entrez"]:
+        for target_id_space in ["Ensembl", "Entrez", "Symbol"]:
             if not entry[target_id_space].exists() or args.force:
                 logger.info(f"Mapping {entry['uniprot_file'].name} to {target_id_space}...")
                 map_from_uniprot_ac(entry['uniprot_file'], entry[target_id_space], target_id_space, mapper)
@@ -170,9 +172,11 @@ def main(argv=None):
 
     network_stats_df = pd.DataFrame(network_stats)
     network_stats_df.sort_values(by='network', inplace=True)
-    network_stats_df.reset_index(drop=True, inplace=True)  
-    network_stats_df.to_csv(os.path.join(config["log_dir"], "network_stats.tsv"), index=False, sep="\t")
+    network_stats_df.reset_index(drop=True, inplace=True)
     print(network_stats_df.to_string())
+    network_stats_df.to_csv(os.path.join(config["log_dir"], "network_stats.tsv"), index=False, sep="\t")
+    with open(os.path.join(config["log_dir"], "network_stats.md"), "w") as f:
+        f.write(network_stats_df.to_markdown(index=False))
 
     logger.info("Program finished.")
 

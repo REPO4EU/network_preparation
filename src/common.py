@@ -55,6 +55,8 @@ def map_from_uniprot_ac(input_file, output_file, id_space, mapper):
             mapping = mapper.uniprot_ac_to_ensembl
         case "Entrez":
             mapping = mapper.uniprot_ac_to_entrez
+        case "Symbol":
+            mapping = mapper.uniprot_ac_to_symbol
         case _:
             raise ValueError(f"Unknown id space: {id_space}")
     

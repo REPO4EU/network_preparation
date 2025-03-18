@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 import os
 from collections import defaultdict
+import json
+import mygene
 
 def create_mapping(df, source_col, target_col):
     mapping = defaultdict(list)
@@ -42,7 +44,7 @@ def create_mapping(df, source_col, target_col):
 
     return mapping
 class id_mapper:
-    def __init__(self, uniprot_file):
+    def __init__(self, uniprot_file, mygene_file, force=False):
 
         uniprot_header = (
             "UniProtKB-AC",
@@ -100,5 +102,41 @@ class id_mapper:
         self.ensembl_pro_to_uniprot_ac = create_mapping(df, "Ensembl_PRO", "UniProtKB-AC")
         self.uniprot_ac_to_ensembl = create_mapping(df, "UniProtKB-AC", "Ensembl")
         self.uniprot_ac_to_entrez = create_mapping(df, "UniProtKB-AC", "GeneID (EntrezGene)")
+
+
+        logging.info("Creating mapping from UniProtKB-AC to Symbol.")
+        if mygene_file.exists() and not force:
+            logging.info(f"Loading existing mapping from {mygene_file}.")
+            with open(mygene_file, "r") as f:
+                self.uniprot_ac_to_symbol = json.load(f)
+        else:
+            # Initialize MyGene.info client
+            logging.info("Querying MyGene.info.")
+
+            mg = mygene.MyGeneInfo()
+
+            # List of UniProt IDs
+            uniprot_ids = df["UniProtKB-AC"].tolist()
+
+            # Query MyGene.info
+            results = mg.querymany(uniprot_ids, scopes="uniprot", fields="symbol", species="human", returnall=True)
+
+            mapped_genes = [(res["query"], res.get("symbol", None)) for res in results["out"]]
+
+            # Print results
+            symbol_mapping = defaultdict(list)
+
+            # Convert column elements to lists, if not yet the case
+            for source, target in mapped_genes:
+                if target is not None:
+                    symbol_mapping[source].append(target)
+            
+            # Save mapping to file
+            with open(mygene_file, "w") as f:
+                json.dump(symbol_mapping, f)
+
+            self.uniprot_ac_to_symbol = dict(symbol_mapping)
+
+
 
 
