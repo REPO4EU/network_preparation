@@ -14,8 +14,7 @@ from id_mapping import id_mapper
 import glob
 import graph_tool.all as gt
 import pandas as pd
-
-logger = logging.getLogger()
+from logging_config import logger, setup_logging
 config = toml.load("config.toml")
 
 
@@ -42,17 +41,14 @@ def main(argv=None):
     """Coordinate argument parsing and program execution."""
     args = parse_args(argv)
 
-    logging.basicConfig(
-        level=args.log_level, 
-        format="%(asctime)s [%(levelname)s] %(filename)s:%(funcName)s - %(message)s",
-        datefmt="%d.%m.%Y %H:%M:%S"
-    )
-    logger.info("Starting program.")
-    logger.debug(f"{config=}")
-
     os.makedirs(Path(config["download_dir"]).resolve(), exist_ok=True)
     os.makedirs(Path(config["network_dir"]).resolve(), exist_ok=True)
     os.makedirs(Path(config["log_dir"]).resolve(), exist_ok=True)
+
+
+    setup_logging(level=args.log_level, log_dir=config["log_dir"])
+    logger.info("Starting program.")
+    logger.debug(f"{config=}")
 
 
 
@@ -67,11 +63,14 @@ def main(argv=None):
             else:
                 logger.info(f"Skipping download of {source[0]}.{file[0]}. File already exists")
                 logger.debug(f"{target=}")
-    
+
+
+
     # download files for id mapping
     uniprot_mapping_file = Path(os.path.join(config["download_dir"], config["idmapping"]["uniprot"]["filename"])).resolve()
     uniport_mapping_url = config["idmapping"]["uniprot"]["url"]
     mygene_mapping_file = Path(os.path.join(config["download_dir"], config["idmapping"]["mygene"]["filename"])).resolve()
+
     if not uniprot_mapping_file.exists() or args.force:
             logger.info(f"Downloading uniprot id mapping...")
             download(uniport_mapping_url, uniprot_mapping_file)
@@ -113,6 +112,7 @@ def main(argv=None):
     logger.debug(f"{network_configs=}")
 
 
+
     # parse network files to graph-tool graphs in their native id space
     for entry in network_configs:
         if not entry["output_file"].exists() or args.force:
@@ -122,8 +122,11 @@ def main(argv=None):
             logger.info(f"Skipping parsing of {entry['output_file'].name}. File already exists")
 
 
+
     # Load id mapping
     mapper = id_mapper(uniprot_mapping_file, mygene_mapping_file)
+
+
 
     # Map to uniprot if not already the case
     for entry in network_configs:
@@ -133,7 +136,9 @@ def main(argv=None):
                 map_to_uniprot_ac(entry["output_file"], entry["uniprot_file"], entry["id_space"], mapper)
             else:
                 logger.info(f"Skipping mapping of {entry['output_file'].name} to UniProtKB-AC. File already exists")
-    
+
+
+
     # Map to ensembl, entrez, and symbol
     for entry in network_configs:
         for target_id_space in ["Ensembl", "Entrez", "Symbol"]:
@@ -142,6 +147,7 @@ def main(argv=None):
                 map_from_uniprot_ac(entry['uniprot_file'], entry[target_id_space], target_id_space, mapper)
             else:
                 logger.info(f"Skipping mapping of {entry['uniprot_file'].name} to {target_id_space}. File already exists")
+
 
 
     # Print network stats
@@ -177,6 +183,8 @@ def main(argv=None):
     network_stats_df.to_csv(os.path.join(config["log_dir"], "network_stats.tsv"), index=False, sep="\t")
     with open(os.path.join(config["log_dir"], "network_stats.md"), "w") as f:
         f.write(network_stats_df.to_markdown(index=False))
+
+
 
     logger.info("Program finished.")
 
