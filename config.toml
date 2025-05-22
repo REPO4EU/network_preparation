@@ -1,5 +1,6 @@
 download_dir = "downloads"
 network_dir = "networks"
+figure_dir = "figures"
 log_dir = "logs"
 
 [idmapping]

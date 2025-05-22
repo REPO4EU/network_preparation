@@ -1,5 +1,6 @@
 import logging
 import graph_tool.all as gt
+import pandas as pd
 
 def g2tuples(g):
     source_list = []
@@ -58,3 +59,15 @@ def filter_network_tuples(network_tuples, remove_dups=True, remove_self_loops=Tr
 
     return network_tuples
 
+def pairwise_matrix(sets, set_names, function):
+    df = pd.DataFrame(columns=set_names)
+    for set_1, name_1 in zip(sets, set_names):
+        row = {name_2: function(set_1, set_2) for set_2, name_2 in zip(sets, set_names)}
+        df.loc[len(df)] = row
+    df.insert(1, "ID", set_names, True)
+    df.set_index("ID", inplace=True)
+    return df
+
+# What percentage of set_2 is included in set_1
+def inclusion(set_1, set_2):
+    return len(set_1.intersection(set_2)) / len(set_1)

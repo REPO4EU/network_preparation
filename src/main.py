@@ -9,11 +9,14 @@ import toml
 import os
 from pathlib import Path
 from common import download, parse, map_to_uniprot_ac, map_from_uniprot_ac
+from utils import inclusion, pairwise_matrix
 from parsers import string
 from id_mapping import id_mapper
 import glob
 import graph_tool.all as gt
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from logging_config import logger, setup_logging
 config = toml.load("config.toml")
 
@@ -44,6 +47,7 @@ def main(argv=None):
     os.makedirs(Path(config["download_dir"]).resolve(), exist_ok=True)
     os.makedirs(Path(config["network_dir"]).resolve(), exist_ok=True)
     os.makedirs(Path(config["log_dir"]).resolve(), exist_ok=True)
+    os.makedirs(Path(config["figure_dir"]).resolve(), exist_ok=True)
 
 
     setup_logging(level=args.log_level, log_dir=config["log_dir"])
@@ -101,7 +105,8 @@ def main(argv=None):
                 network_config["file"] = file[0]
                 network_config["subset"] = subset
                 network_config["output_file"] = Path(f"{output_stem}.{file[1]["id_space"]}.gt").resolve()
-                network_config["uniprot_file"]= Path(f"{output_stem}.UniProtKB-AC.gt").resolve()
+                network_config["uniprot_file"] = Path(f"{output_stem}.UniProtKB-AC.gt").resolve()
+                network_config["UniProtKB-AC"] = network_config["uniprot_file"]
                 network_config["Ensembl"]= Path(f"{output_stem}.Ensembl.gt").resolve()
                 network_config["Entrez"]= Path(f"{output_stem}.Entrez.gt").resolve()
                 network_config["Symbol"]= Path(f"{output_stem}.Symbol.gt").resolve()
@@ -149,8 +154,39 @@ def main(argv=None):
                 logger.info(f"Skipping mapping of {entry['uniprot_file'].name} to {target_id_space}. File already exists")
 
 
+    # Visualize network overlap
+    for id_space in ["UniProtKB-AC", "Ensembl", "Entrez", "Symbol"]:
+        logger.info(f"Creating overlap heatmap for {id_space}...")
+        network_edges = []
+        for entry in network_configs:
+            network = str(entry[id_space])
+            network_basename = os.path.basename(network)
+            g = gt.load_graph(network)
+            # number of edges
+            num_edges = g.num_edges()
+            # iterate over all edges and sort individual tuples so directionality does not matter
+            edges = {tuple(sorted([g.vp["name"][source], g.vp["name"][target]])) for source, target in g.iter_edges()}
+
+            network_edges.append((network_basename, num_edges, edges))
+        
+        # sort networks from largest to smallest
+        sorted_networks = sorted(network_edges, key=lambda x: x[1], reverse=True)
+        ids = [id for id, size, edges in sorted_networks]
+        edges = [edges for id, size, edges in sorted_networks]
+        df = pairwise_matrix(edges, ids, inclusion)
+
+        # Create the heatmap
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(df, annot=True, fmt=".2f", cmap="viridis") 
+
+        plt.title("Each row shows the percentage of edges also included the column network", fontsize=14)
+
+        # Save the figure
+        plt.savefig(os.path.join(config["figure_dir"],f"{id_space}.edge_overlap.png"), dpi=300, bbox_inches="tight")  
+
 
     # Print network stats
+    logger.info("Creating network stats...")
     networks = glob.glob(os.path.join(config["network_dir"], "*.gt"))
     network_stats = []
     for network in networks:
